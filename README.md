@@ -29,8 +29,9 @@
 6. [Instalación y Configuración Local](#-instalación-y-configuración-local)
 7. [Documentación Swagger (OpenAPI)](#-documentación-swagger-openapi)
 8. [Catálogo de Endpoints de la API](#-catálogo-de-endpoints-de-la-api)
-9. [Guía Paso a Paso para Subir a Git / GitHub](#-guía-paso-a-paso-para-subir-a-git--github)
-10. [Autor y Créditos](#-autor-y-créditos)
+9. [Integración Frontend y Solución de CORS](#-integración-frontend-y-solución-de-cors)
+10. [Guía Paso a Paso para Subir a Git / GitHub](#-guía-paso-a-paso-para-subir-a-git--github)
+11. [Autor y Créditos](#-autor-y-créditos)
 
 ---
 
@@ -366,6 +367,58 @@ Monitorea el dinero gastado vs el límite aprobado para alertar sobre desvíos:
   ]
 }
 ```
+
+---
+
+## 🌐 Integración Frontend y Solución de CORS
+
+Al consumir esta API desde clientes web (como React, Vite, Next.js, Vue o Angular), el navegador aplica la política de seguridad **CORS** (*Cross-Origin Resource Sharing*), exigiendo que las peticiones preliminares (`OPTIONS Preflight`) sean respondidas con los encabezados adecuados.
+
+> [!TIP]
+> Para ver el análisis técnico detallado, causas y mejores prácticas, consulta la **[Guía Completa de CORS y Troubleshooting](docs/CORS_AND_INTEGRATION_GUIDE.md)**.
+
+### Configuración Activa en la API (`api-nest/src/main.ts`)
+
+La API soporta orígenes locales en cualquier puerto (`localhost` y `127.0.0.1`), encabezados `Authorization: Bearer` y credenciales:
+
+```typescript
+app.enableCors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    /^http:\/\/localhost:\d+$/,
+    /^http:\/\/127\.0\.0\.1:\d+$/,
+  ],
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  credentials: true,
+  optionsSuccessStatus: 204,
+});
+```
+
+### Cómo Conectar un Frontend (Vite / React / Next.js)
+
+1. En el frontend, define tu variable de entorno en `.env`:
+   ```env
+   # Para desarrollo local contra el backend local:
+   VITE_API_URL=http://localhost:3000
+
+   # O para conectar directamente al backend en producción:
+   # VITE_API_URL=https://presupuestosinteligentes.onrender.com
+   ```
+
+2. Envía el token `JWT Bearer` en las peticiones que requieren autenticación:
+   ```typescript
+   headers: {
+     'Content-Type': 'application/json',
+     'Authorization': `Bearer ${accessToken}`,
+   }
+   ```
+
+3. **Para despliegues a producción (Vercel, Netlify, dominios propios):**  
+   Simplemente agrega el dominio de tu frontend al arreglo `origin` en `api-nest/src/main.ts` o configúralo mediante la variable de entorno `FRONTEND_URL` en tu proveedor de hosting (Render).
 
 ---
 
