@@ -1,5 +1,5 @@
-
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -9,8 +9,8 @@ import {
   Query,
   Req,
   UseGuards,
-  Body,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { TransactionsService } from './transactions.service.js';
@@ -21,12 +21,17 @@ interface AuthenticatedRequest extends Request {
   user: { userId: string; email: string };
 }
 
+@ApiTags('Transactions')
+@ApiBearerAuth()
 @Controller('transactions')
 @UseGuards(JwtAuthGuard)
 export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Registrar un movimiento (ingreso o gasto)' })
+  @ApiResponse({ status: 201, description: 'Transacción creada exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o categoría incompatible' })
   create(
     @Req() req: AuthenticatedRequest,
     @Body() dto: CreateTransactionDto,
@@ -35,6 +40,8 @@ export class TransactionsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar transacciones con filtros y paginación' })
+  @ApiResponse({ status: 200, description: 'Listado paginado de transacciones' })
   findAll(
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryTransactionsDto,
@@ -43,6 +50,8 @@ export class TransactionsController {
   }
 
   @Get('summary/:year/:month')
+  @ApiOperation({ summary: 'Obtener sumario mensual de ingresos, gastos y balance' })
+  @ApiResponse({ status: 200, description: 'Totales calculados del periodo' })
   monthlySummary(
     @Req() req: AuthenticatedRequest,
     @Param('year', ParseIntPipe) year: number,
@@ -56,6 +65,9 @@ export class TransactionsController {
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Eliminar una transacción' })
+  @ApiResponse({ status: 200, description: 'Transacción eliminada' })
+  @ApiResponse({ status: 404, description: 'Transacción no encontrada' })
   remove(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,

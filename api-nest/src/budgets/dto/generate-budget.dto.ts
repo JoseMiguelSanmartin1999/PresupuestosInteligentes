@@ -1,4 +1,4 @@
-
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -13,17 +13,32 @@ import {
 } from 'class-validator';
 
 export class FixedExpenseDto {
+  @ApiProperty({
+    example: 'Arriendo',
+    description: 'Nombre del gasto fijo obligatorio',
+    minLength: 2,
+    maxLength: 80,
+  })
   @IsString()
   @MinLength(2)
   @MaxLength(80)
   name: string;
 
+  @ApiProperty({
+    example: 300,
+    description: 'Monto del gasto fijo',
+    minimum: 0.01,
+  })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
   @Max(9999999999.99)
   amount: number;
 
+  @ApiPropertyOptional({
+    example: 'cmvobefa90001v3x40z39pobf',
+    description: 'ID opcional de categoría asociada',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(30)
@@ -31,8 +46,12 @@ export class FixedExpenseDto {
 }
 
 export class GenerateBudgetDto {
-  // Si no se proporciona, se utilizará el promedio
-  // de ingresos de los últimos tres meses completos.
+  @ApiPropertyOptional({
+    example: 1200,
+    description:
+      'Ingreso mensual estimado. Si se omite, calcula el promedio de los últimos 3 meses',
+    minimum: 0.01,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -40,7 +59,13 @@ export class GenerateBudgetDto {
   @Max(9999999999.99)
   monthlyIncome?: number;
 
-  // Porcentaje del ingreso que se desea ahorrar.
+  @ApiPropertyOptional({
+    example: 10,
+    default: 10,
+    description: 'Porcentaje de ahorro deseado (0 - 80%)',
+    minimum: 0,
+    maximum: 80,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -48,7 +73,14 @@ export class GenerateBudgetDto {
   @Max(80)
   savingsGoalPercent = 10;
 
-  // Gastos fijos que el usuario conoce de antemano.
+  @ApiPropertyOptional({
+    type: [FixedExpenseDto],
+    description: 'Lista de gastos fijos conocidos que se restarán antes del gasto variable',
+    example: [
+      { name: 'Arriendo', amount: 300 },
+      { name: 'Servicios básicos', amount: 45 },
+    ],
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
