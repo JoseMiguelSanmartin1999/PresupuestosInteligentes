@@ -8,6 +8,7 @@ import { Prisma, TransactionType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateTransactionDto } from './dto/create-transaction.dto.js';
 import { QueryTransactionsDto } from './dto/query-transactions.dto.js';
+import { UpdateTransactionDto } from './dto/update-transaction.dto.js';
 
 @Injectable()
 export class TransactionsService {
@@ -86,6 +87,62 @@ export class TransactionsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async update(userId: string, id: string, dto: UpdateTransactionDto) {
+    const transaction = await this.prisma.transaction.findFirst({
+      where: { id, userId },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException('Transacción no encontrada');
+    }
+
+    const targetType = dto.type ?? transaction.type;
+    const isCategoryIdProvided = dto.categoryId !== undefined;
+    const targetCategoryId = isCategoryIdProvided
+      ? (dto.categoryId === '' ? null : dto.categoryId)
+      : transaction.categoryId;
+
+    const shouldValidateCategory =
+      targetCategoryId !== null &&
+      (isCategoryIdProvided || (dto.type !== undefined && dto.type !== transaction.type));
+
+    if (shouldValidateCategory) {
+      const category = await this.prisma.category.findFirst({
+        where: {
+          id: targetCategoryId,
+          userId,
+          type: targetType,
+        },
+      });
+
+      if (!category) {
+        throw new BadRequestException(
+          'La categoría no existe o no corresponde al tipo de movimiento',
+        );
+      }
+    }
+
+    return this.prisma.transaction.update({
+      where: { id },
+      data: {
+        ...(dto.amount !== undefined && {
+          amount: new Prisma.Decimal(dto.amount),
+        }),
+        ...(dto.type !== undefined && { type: dto.type }),
+        ...(dto.description !== undefined && {
+          description: dto.description ? dto.description.trim() : null,
+        }),
+        ...(dto.date !== undefined && {
+          date: new Date(dto.date),
+        }),
+        ...(isCategoryIdProvided && {
+          categoryId: targetCategoryId,
+        }),
+      },
+      include: { category: true },
+    });
   }
 
   async remove(userId: string, id: string) {

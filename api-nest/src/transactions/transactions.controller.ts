@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { TransactionsService } from './transactions.service.js';
 import { CreateTransactionDto } from './dto/create-transaction.dto.js';
 import { QueryTransactionsDto } from './dto/query-transactions.dto.js';
+import { UpdateTransactionDto } from './dto/update-transaction.dto.js';
 
 interface AuthenticatedRequest extends Request {
   user: { userId: string; email: string };
@@ -62,6 +64,19 @@ export class TransactionsController {
       year,
       month,
     );
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar una transacción existente' })
+  @ApiResponse({ status: 200, description: 'Transacción actualizada exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos inválidos o categoría incompatible' })
+  @ApiResponse({ status: 404, description: 'Transacción no encontrada' })
+  update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() dto: UpdateTransactionDto,
+  ) {
+    return this.transactionsService.update(req.user.userId, id, dto);
   }
 
   @Delete(':id')

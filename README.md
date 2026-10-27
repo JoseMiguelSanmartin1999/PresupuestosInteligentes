@@ -282,6 +282,7 @@ Authorization: Bearer <tu_jwt_token>
 | Método | Ruta | Parámetros / Payload | Descripción |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/transactions` | `{ "amount": 25.50, "type": "EXPENSE", "description": "Almuerzo", "categoryId": "..." }` | Registra un movimiento financiero. |
+| `PATCH` | `/transactions/:id` | `{ "amount"?: 25.50, "type"?: "EXPENSE", "description"?: "...", "date"?: "...", "categoryId"?: "..." }` | Actualiza parcialmente una transacción existente (monto, tipo, concepto, fecha o categoría). |
 | `GET` | `/transactions` | Query params: `from`, `to`, `type`, `categoryId`, `page`, `limit` | Lista movimientos paginados con filtros de fecha y tipo. |
 | `GET` | `/transactions/summary/:year/:month` | Parámetros de ruta: `year` (ej. 2026), `month` (ej. 10) | Sumario mensual agregado: ingresos totales, gastos totales y balance neto. |
 | `DELETE` | `/transactions/:id` | *Ninguno* | Elimina una transacción. |
